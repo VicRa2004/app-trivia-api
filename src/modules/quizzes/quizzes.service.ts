@@ -6,6 +6,7 @@ import {
 import { PrismaService } from '../../prisma.service';
 import { CreateQuizDto } from './dto/create-quiz.dto';
 import { UpdateQuizDto } from './dto/update-quiz.dto';
+import { PaginationDto } from '../../common/dto/pagination-query.dto';
 
 @Injectable()
 export class QuizzesService {
@@ -24,16 +25,34 @@ export class QuizzesService {
     });
   }
 
-  async findAll() {
-    return this.prisma.quiz.findMany({
-      where: { isPublic: true },
-      include: {
-        creator: {
-          select: { id: true, username: true },
+  async findAll(paginationDto: PaginationDto) {
+    const { page = 1, limit = 10 } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      this.prisma.quiz.findMany({
+        where: { isPublic: true },
+        skip,
+        take: limit,
+        include: {
+          creator: {
+            select: { id: true, username: true },
+          },
+          category: true,
         },
-        category: true,
+      }),
+      this.prisma.quiz.count({ where: { isPublic: true } }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        lastPage: Math.ceil(total / limit),
       },
-    });
+    };
   }
 
   async findOne(id: string) {

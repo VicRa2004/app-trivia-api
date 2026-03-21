@@ -6,18 +6,38 @@ import { UpdateUserDto } from './dto/update-user.dto';
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll() {
-    return this.prisma.user.findMany({
-      select: {
-        id: true,
-        fullName: true,
-        username: true,
-        email: true,
-        age: true,
-        preferredLanguage: true,
-        createdAt: true,
+  async findAll(
+    paginationDto: import('../../common/dto/pagination-query.dto').PaginationDto,
+  ) {
+    const { page = 1, limit = 10 } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      this.prisma.user.findMany({
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          fullName: true,
+          username: true,
+          email: true,
+          age: true,
+          preferredLanguage: true,
+          createdAt: true,
+        },
+      }),
+      this.prisma.user.count(),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        lastPage: Math.ceil(total / limit),
       },
-    });
+    };
   }
 
   async findOne(id: string) {
