@@ -1,98 +1,108 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+<div align="center">
+  <img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" />
+  <h1>Trivia App API</h1>
+  <p><strong>Un motor de Trivia en Tiempo Real (estilo Kahoot!) construido sobre NestJS</strong></p>
+</div>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+---
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Descripción del Proyecto
 
-## Description
+**Trivia App API** es un backend robusto de alto rendimiento diseñado para gestionar partidas de trivias interactivas. Se divide en dos poderosas capas:
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+1. **API RESTful:** Encargada de la administración de Usuarios, Categorías, y el CRUD completo de Cuestionarios (Quizzes) y sus métricas.
+2. **WebSocket Gateway:** Un motor de juego impulsado por **Socket.IO** que maneja salas en tiempo real, sincronización de preguntas, marcadores en vivo (Leaderboards) y distribución de puntos, todo mientras mitiga mecánicas de trampa del lado del cliente.
 
-## Project setup
+## Características Principales
 
-```bash
-$ npm install
-```
+- **Autenticación y Seguridad:** JWT (JSON Web Tokens) con contraseñas encriptadas nativamente (Bcrypt) y guardias (Guards) granulares.
+- **Gestión Documental:** Rutas REST completamente paginadas y predecibles.
+- **Salas Multiplayer:** Hosts pueden crear salas con su propio PIN de 6 dígitos donde múltiples jugadores pueden emparejarse en tiempo real.
+- **Motor de Puntos Dinámico:** El tiempo que tarda un jugador en responder afecta su puntaje final, calculando multiplicadores y bonificaciones al vuelo.
+- **Auto-Documentación Dinámica:** Generación de Open API (Swagger) inyectada directamente en código para un _Developer Experience_ impecable.
 
-## Compile and run the project
+---
 
-```bash
-# development
-$ npm run start
+## Stack Tecnológico
 
-# watch mode
-$ npm run start:dev
+|                  Tecnología                   | Rol en el Proyecto                                                  |
+| :-------------------------------------------: | :------------------------------------------------------------------ |
+|       **[NestJS](https://nestjs.com/)**       | Framework Node.js progresivo y modular.                             |
+|   **[Prisma ORM](https://www.prisma.io/)**    | Mapeo objeto-relacional (Tipado seguro de extremo a extremo).       |
+| **[PostgreSQL](https://www.postgresql.org/)** | Base de datos relacional sólida y escalable.                        |
+|      **[Socket.IO](https://socket.io/)**      | Comunicación bidireccional en tiempo real para el entorno de juego. |
+|      **[Swagger](https://swagger.io/)**       | Documentación de la API Interactiva visual.                         |
 
-# production mode
-$ npm run start:prod
-```
+---
 
-## Run tests
+## ⚙️ Requisitos Previos
 
-```bash
-# unit tests
-$ npm run test
+Antes de poder levantar el ecosistema en tu máquina, requieres de:
 
-# e2e tests
-$ npm run test:e2e
+- [Node.js](https://nodejs.org/) (v18 o superior).
+- Base de datos PostgreSQL local o en la nube (ej., Supabase, Neon).
 
-# test coverage
-$ npm run test:cov
-```
+## Instalación y Puesta en Marcha
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+**1. Clonar el repositorio y descargar dependencias:**
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+git clone https://github.com/VicRa2004/app-trivia-api.git
+cd app-trivia-api
+npm install
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+**2. Configurar Entorno (`.env`):**
+Duplica o crea un archivo `.env` en la raíz del proyecto y configura tus credenciales:
 
-## Resources
+```env
+# Variables de la Base de Datos Prisma
+DATABASE_URL="postgresql://usuario:password@localhost:5432/trivia_db?schema=public"
 
-Check out a few resources that may come in handy when working with NestJS:
+# Variables de Seguridad
+JWT_SECRET="mi_palabra_secreta_super_segura"
+PORT=3000
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+**3. Inicializar Base de Datos (Migraciones):**
 
-## Support
+```bash
+npx prisma migrate dev --name init
+npx prisma generate
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+**4. Levantar el Servidor en Modo Desarrollo:**
 
-## Stay in touch
+```bash
+npm run start:dev
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+¡Listo! Tu backend estará respirando en `http://localhost:3000`.
 
-## License
+---
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+## Documentación
+
+No estás solo en esto. Hemos preparado recursos para facilitarte la vida consumiendo esta API.
+
+- **[Documentación del Frontend](./docs/README.md)**: Aquí encontrarás explícitamente **TODOS LOS EVENTOS** de WebSockets cómo funcionan y cómo atraparlos (Módulo de Juego).
+- **[Open API / Swagger]**: Estando el servidor encendido, dirígete a `http://localhost:3000/api` en tu navegador web. Verás una interfaz de pruebas viva y las maquetas (DTOs) completas de cada ruta REST.
+
+---
+
+## Estructura del Proyecto
+
+```text
+src/
+ ├── common/         # Interfaces globales como Respuestas Paginadas (PaginationDto)
+ ├── modules/
+ │   ├── auth/       # Casos de uso de seguridad (Login, Register, WebTokens)
+ │   ├── categories/ # Temáticas de Quizzes
+ │   ├── game/       # El "Cerebro" de Tiempo Real. Aquí viven los Sockets
+ │   ├── quizzes/    # Cuestionarios, Preguntas y sus Opciones (Respuestas)
+ │   └── users/      # Base de jugadores
+ ├── app.module.ts   # Orquestador raíz de Nest
+ └── main.ts         # Punto de ensamble de Servidor + Pipes globales + Swagger
+```
+
+---
