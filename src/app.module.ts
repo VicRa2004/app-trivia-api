@@ -6,9 +6,11 @@ import { QuizzesModule } from './modules/quizzes/quizzes.module';
 import { GameModule } from './modules/game/game.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { PrismaModule } from './prisma.module';
 
 @Module({
   imports: [
+    PrismaModule,
     UsersModule,
     QuizzesModule,
     GameModule,
