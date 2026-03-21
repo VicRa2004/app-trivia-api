@@ -15,9 +15,10 @@ async function bootstrap() {
   );
 
   const config = new DocumentBuilder()
-    .setTitle('Mi súper API')
+    .setTitle('Trivia API')
     .setDescription('Documentación autogenerada de mi proyecto en NestJS')
     .setVersion('1.0')
+    .addBearerAuth()
     .build();
 
   // Crear el documento y montar la ruta
