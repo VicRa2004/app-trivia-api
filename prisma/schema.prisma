@@ -6,3 +6,139 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum QuestionType {
+  multiple_choice
+  true_false
+  short_answer
+  ordering
+  image_choice
+}
+
+enum SessionStatus {
+  waiting
+  in_progress
+  finished
+}
+
+// --- Modelos ---
+
+model Category {
+  id      String  @id @default(uuid()) @db.Uuid
+  name    String  @unique @db.VarChar(50)
+  iconUrl String? @map("icon_url")
+  quizzes Quiz[]
+
+  @@map("categories")
+}
+
+model User {
+  id                String   @id @default(uuid()) @db.Uuid
+  fullName          String   @map("full_name") @db.VarChar(100)
+  username          String   @unique @db.VarChar(50)
+  email             String   @unique @db.VarChar(150)
+  passwordHash      String   @map("password_hash")
+  age               Int?
+  profilePictureUrl String?  @map("profile_picture_url")
+  preferredLanguage String   @default("es") @map("preferred_language") @db.VarChar(5)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  quizzes        Quiz[]        @relation("UserQuizzes")
+  attempts       Attempt[]
+  sessionsHosted GameSession[] @relation("HostSessions")
+
+  @@map("users")
+}
+
+model Quiz {
+  id           String    @id @default(uuid()) @db.Uuid
+  creator      User      @relation("UserQuizzes", fields: [creatorId], references: [id], onDelete: Cascade)
+  creatorId    String    @map("creator_id") @db.Uuid
+  category     Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryId   String?   @map("category_id") @db.Uuid
+  title        String    @db.VarChar(200)
+  description  String?
+  thumbnailUrl String?   @map("thumbnail_url")
+  isPublic     Boolean   @default(true) @map("is_public")
+  totalPlays   Int       @default(0) @map("total_plays")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  questions Question[]
+  sessions  GameSession[]
+
+  @@map("quizzes")
+}
+
+model Question {
+  id           String       @id @default(uuid()) @db.Uuid
+  quiz         Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  quizId       String       @map("quiz_id") @db.Uuid
+  questionText String       @map("question_text")
+  questionType QuestionType @map("question_type")
+  explanation  String?
+  points       Int          @default(1000)
+  timeLimit    Int          @default(20) @map("time_limit")
+  orderNumber  Int          @map("order_number")
+  createdAt    DateTime     @default(now()) @map("created_at")
+
+  options   Option[]
+  responses UserResponse[]
+
+  @@map("questions")
+}
+
+model Option {
+  id         String   @id @default(uuid()) @db.Uuid
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  questionId String   @map("question_id") @db.Uuid
+  content    String
+  isCorrect  Boolean  @default(false) @map("is_correct")
+  position   Int?
+
+  @@map("options")
+}
+
+model GameSession {
+  id                   String        @id @default(uuid()) @db.Uuid
+  quiz                 Quiz          @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  quizId               String        @map("quiz_id") @db.Uuid
+  host                 User          @relation("HostSessions", fields: [hostId], references: [id])
+  hostId               String        @map("host_id") @db.Uuid
+  gamePin              String        @unique @map("game_pin") @db.VarChar(6)
+  status               SessionStatus @default(waiting)
+  currentQuestionIndex Int           @default(0) @map("current_question_index")
+  maxPlayers           Int           @default(5) @map("max_players")
+  createdAt            DateTime      @default(now()) @map("created_at")
+
+  attempts Attempt[]
+
+  @@map("game_sessions")
+}
+
+model Attempt {
+  id          String      @id @default(uuid()) @db.Uuid
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String      @map("user_id") @db.Uuid
+  session     GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId   String      @map("session_id") @db.Uuid
+  totalScore  Int         @default(0) @map("total_score")
+  finalRank   Int?        @map("final_rank")
+  completedAt DateTime    @default(now()) @map("completed_at")
+
+  responses UserResponse[]
+
+  @@map("attempts")
+}
+
+model UserResponse {
+  id             String   @id @default(uuid()) @db.Uuid
+  attempt        Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  attemptId      String   @map("attempt_id") @db.Uuid
+  question       Question @relation(fields: [questionId], references: [id])
+  questionId     String   @map("question_id") @db.Uuid
+  givenAnswer    String?  @map("given_answer")
+  isCorrect      Boolean? @map("is_correct")
+  responseTimeMs Int?     @map("response_time_ms")
+
+  @@map("user_responses")
+}
