@@ -49,4 +49,48 @@ export class QuizzesController {
   remove(@Param('id') id: string, @Request() req: any) {
     return this.quizzesService.remove(id, req.user.userId);
   }
+
+  // --- QUESTIONS ENDPOINTS ---
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/questions')
+  addQuestion(
+    @Param('id') id: string,
+    @Body()
+    createQuestionDto: import('./dto/create-question.dto').CreateQuestionDto,
+    @Request() req: any,
+  ) {
+    return this.quizzesService.addQuestion(
+      id,
+      req.user.userId,
+      createQuestionDto,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/questions/:questionId')
+  updateQuestion(
+    @Param('id') id: string,
+    @Param('questionId') questionId: string,
+    @Body()
+    updateQuestionDto: import('./dto/update-question.dto').UpdateQuestionDto,
+    @Request() req: any,
+  ) {
+    return this.quizzesService.updateQuestion(
+      id,
+      questionId,
+      req.user.userId,
+      updateQuestionDto,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id/questions/:questionId')
+  removeQuestion(
+    @Param('id') id: string,
+    @Param('questionId') questionId: string,
+    @Request() req: any,
+  ) {
+    return this.quizzesService.removeQuestion(id, questionId, req.user.userId);
+  }
 }
