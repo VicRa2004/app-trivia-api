@@ -9,7 +9,14 @@ import { CategoriesModule } from './modules/categories/categories.module';
 import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
-  imports: [UsersModule, QuizzesModule, GameModule, PrismaModule, CategoriesModule, AuthModule],
+  imports: [
+    UsersModule,
+    QuizzesModule,
+    GameModule,
+    PrismaModule,
+    CategoriesModule,
+    AuthModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
