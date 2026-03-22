@@ -63,7 +63,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Notificar a todos en la sala que se unió (para que el Host lo vea, y el mismo jugador)
       const currentPlayers = this.gameService.getPlayers(data.gamePin);
       this.server.to(data.gamePin).emit('player_joined', {
-        player: player.username,
+        player: player?.username,
         playersList: currentPlayers,
       });
 
