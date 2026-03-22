@@ -101,17 +101,42 @@ Si ya se agotaron las preguntas, el payload que escucharán es `all_questions_en
 ## 3.4. Ciclo de Preguntas: Responder (`submit_answer`)
 
 **[JUGADOR] Emite `submit_answer`**
-Envía al servidor la opción elegida en su UI y cuánto tardó en picarle.
-Payload extendido:
+Envía al servidor su elección final y cuánto tardó en picarla. Esto varía fuertemente dependiendo el `questionType` de la ronda actual.
+
+**Ejemplo 1 (Standard): Múltiple, True/False, Imagen**
+Envía directamente el **ID UUID** de la opción elegida.
 ```json
 {
   "gamePin": "123456",
   "token": "tu_jwt",
-  "optionId": "uuid-o2",
+  "answerPayload": "uuid-o2",
   "timeElapsedMs": 3500
 }
 ```
-*(Se usa `timeElapsedMs` para penalizar la lentitud. Responde rápido = más puntos. Responder después de los 20 segundos restará considerablemente los puntos otorgados al 50% mínimo, que es la logica base Kahoot)*.
+
+**Ejemplo 2 (Respuesta Corta - Texto Libre)**
+Envía el **String / Texto** tal cual lo tecleó el jugador. El servidor se encarga de cruzarlo en minúsculas y limpiarlo automáticamente.
+```json
+{
+  "gamePin": "123456",
+  "token": "tu_jwt",
+  "answerPayload": "Leonardo Da Vinci",
+  "timeElapsedMs": 6800
+}
+```
+
+**Ejemplo 3 (Ordering - Ordenamiento)**
+Envía un **Array** de UUIDs con el orden final en el que el Jugador armó su bloque.
+```json
+{
+  "gamePin": "123456",
+  "token": "tu_jwt",
+  "answerPayload": ["uuid-opt3", "uuid-opt1", "uuid-opt2"],
+  "timeElapsedMs": 14000
+}
+```
+
+*(Se usa `timeElapsedMs` para penalizar la lentitud. Responder rápido = más puntos. El servidor te cruzará en Base de Datos este dato con el Top 5 en caso de que la Trivia estuviera configurada como Privada)*.
 
 **[JUGADOR] Escucha `answer_received`** (Esto SÓLO le llega a quien respondió).
 El servidor acusa recibo, valida si es correcta temporalmente en RAM y actualiza su score local.
@@ -123,7 +148,7 @@ Payload `answer_received`:
   "newScore": 1450
 }
 ```
-*Si falló, lanzará puntos cero. Si intentó responder 2 veces, mandará `success: false`.*
+*Si falló, lanzará puntos cero. Si la Trivia es Privada y contestaste correcto pero ya hubo 5 ganadores antes de ti, el servidor descartará tus puntos y emitirá `success: false, message: "Demasiado tarde, cupo de ganadores lleno"`.*
 
 ---
 

@@ -7,6 +7,7 @@ import {
   IsArray,
   ValidateNested,
   IsBoolean,
+  IsUrl,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { QuestionType } from '../../../generated/prisma/client';
@@ -15,6 +16,11 @@ export class CreateOptionDto {
   @IsString()
   @IsNotEmpty()
   content: string;
+
+  @IsString()
+  @IsOptional()
+  @IsUrl()
+  imageUrl?: string;
 
   @IsBoolean()
   @IsOptional()
@@ -37,6 +43,11 @@ export class CreateQuestionDto {
   @IsString()
   @IsOptional()
   explanation?: string;
+
+  @IsString()
+  @IsOptional()
+  @IsUrl()
+  imageUrl?: string;
 
   @IsInt()
   @IsOptional()

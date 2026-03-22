@@ -86,7 +86,8 @@ Crea el cascarón de un Quiz.
 
 ### `POST /quizzes/:quizId/questions`
 Agrega una pregunta junto con todas sus opciones en una sola petición.
-**Body:**
+
+**Ejemplo 1: Opción Múltiple Clásica**
 ```json
 {
   "questionText": "¿Quién pintó la Mona Lisa?",
@@ -94,13 +95,61 @@ Agrega una pregunta junto con todas sus opciones en una sola petición.
   "points": 1000,
   "timeLimit": 20,
   "orderNumber": 1,
+  "imageUrl": "https://url.com/opcional-gioconda.jpg",
   "options": [
-    { "content": "Da Vinci", "isCorrect": true, "position": 1 },
-    { "content": "Picasso", "isCorrect": false, "position": 2 },
-    { "content": "Van Gogh", "isCorrect": false, "position": 3 }
+    { "content": "Da Vinci", "isCorrect": true },
+    { "content": "Picasso", "isCorrect": false }
   ]
 }
 ```
+
+**Ejemplo 2: Respuesta Corta (Libre texto)**
+```json
+{
+  "questionText": "¿En qué año se descubrió América?",
+  "questionType": "short_answer",
+  "points": 1000,
+  "timeLimit": 20,
+  "orderNumber": 2,
+  "options": [
+    { "content": "1492", "isCorrect": true },
+    { "content": "mil cuatrocientos noventa y dos", "isCorrect": true }
+  ]
+}
+```
+
+**Ejemplo 3: Ordenamiento (Ordering)**
+> 🚨 **Importante:** Obligatorio indicar la propiedad `position` en orden ascendente lógico.
+```json
+{
+  "questionText": "Ordena de mayor a menor tamaño estos planetas",
+  "questionType": "ordering",
+  "points": 1500,
+  "timeLimit": 30,
+  "orderNumber": 3,
+  "options": [
+    { "content": "Júpiter", "position": 1 },
+    { "content": "Tierra", "position": 2 },
+    { "content": "Luna", "position": 3 }
+  ]
+}
+```
+
+**Ejemplo 4: Selección de Imagen (Image Choice)**
+```json
+{
+  "questionText": "¿Cuál es la bandera de Canadá?",
+  "questionType": "image_choice",
+  "points": 1000,
+  "timeLimit": 15,
+  "orderNumber": 4,
+  "options": [
+    { "content": "Opción 1", "imageUrl": "https://url.com/bandera-canada.png", "isCorrect": true },
+    { "content": "Opción 2", "imageUrl": "https://url.com/bandera-mexico.png", "isCorrect": false }
+  ]
+}
+```
+
 **Respuesta:** Retorna el objeto `Question` interconectado con su nuevo array de `Options`.
 
 ### `PATCH /quizzes/:quizId/questions/:questionId`

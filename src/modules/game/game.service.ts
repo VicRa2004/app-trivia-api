@@ -5,6 +5,11 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
+import { Prisma, QuestionType } from '../../generated/prisma/client';
+
+type QuestionWithOptions = Prisma.QuestionGetPayload<{
+  include: { options: true };
+}>;
 
 export interface PlayerState {
   socketId: string;
@@ -13,7 +18,7 @@ export interface PlayerState {
   score: number;
   responses: Array<{
     questionId: string;
-    optionId: string;
+    givenAnswer: string;
     isCorrect: boolean;
     responseTimeMs: number;
     pointsScored: number;
@@ -26,9 +31,11 @@ export interface GameState {
   quizId: string;
   gamePin: string;
   status: 'waiting' | 'in_progress' | 'finished';
-  currentQuestionIndex: number; // Starts at -1
-  questions: any[];
+  currentQuestionIndex: number;
+  questions: QuestionWithOptions[];
   players: Map<string, PlayerState>;
+  isPublic: boolean;
+  currentQuestionCorrectAnswersCount: number;
 }
 
 @Injectable()
@@ -58,7 +65,6 @@ export class GameService {
       },
     });
 
-    // Ordenar preguntas por orderNumber
     const sortedQuestions = quiz.questions.sort(
       (a, b) => a.orderNumber - b.orderNumber,
     );
@@ -72,6 +78,8 @@ export class GameService {
       currentQuestionIndex: -1,
       questions: sortedQuestions,
       players: new Map(),
+      isPublic: quiz.isPublic,
+      currentQuestionCorrectAnswersCount: 0,
     });
 
     return { gamePin, sessionId: session.id };
@@ -87,8 +95,8 @@ export class GameService {
     if (!user) throw new NotFoundException('Usuario no válido');
 
     if (game.players.has(userId)) {
-      const player = game.players.get(userId)!;
-      player.socketId = socketId;
+      const existingPlayer = game.players.get(userId);
+      if (existingPlayer) existingPlayer.socketId = socketId;
     } else {
       game.players.set(userId, {
         socketId,
@@ -99,7 +107,12 @@ export class GameService {
       });
     }
 
-    return { game, player: game.players.get(userId) };
+    const assignedPlayer = game.players.get(userId);
+    if (!assignedPlayer) {
+      throw new BadRequestException('Error al registrar al jugador en memoria');
+    }
+
+    return { game, player: assignedPlayer };
   }
 
   getPlayers(gamePin: string) {
@@ -136,16 +149,33 @@ export class GameService {
 
     game.currentQuestionIndex++;
 
+    game.currentQuestionCorrectAnswersCount = 0;
+
     if (game.currentQuestionIndex >= game.questions.length) {
       return null;
     }
 
     const currentQ = game.questions[game.currentQuestionIndex];
 
-    const sanitizedOptions = currentQ.options.map((opt: any) => ({
+    const sanitizedOptions = currentQ.options.map((opt) => ({
       id: opt.id,
       content: opt.content,
+      imageUrl: opt.imageUrl,
     }));
+
+    if (
+      currentQ.questionType === QuestionType.ordering ||
+      currentQ.questionType === QuestionType.multiple_choice ||
+      currentQ.questionType === QuestionType.image_choice
+    ) {
+      for (let i = sanitizedOptions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [sanitizedOptions[i], sanitizedOptions[j]] = [
+          sanitizedOptions[j],
+          sanitizedOptions[i],
+        ];
+      }
+    }
 
     return {
       index: game.currentQuestionIndex,
@@ -156,6 +186,7 @@ export class GameService {
         type: currentQ.questionType,
         points: currentQ.points,
         timeLimit: currentQ.timeLimit,
+        imageUrl: currentQ.imageUrl,
         options: sanitizedOptions,
       },
     };
@@ -164,7 +195,7 @@ export class GameService {
   submitAnswer(
     gamePin: string,
     userId: string,
-    optionId: string,
+    answerPayload: string | string[],
     timeElapsedMs: number,
   ) {
     const game = this.activeGames.get(gamePin);
@@ -181,22 +212,76 @@ export class GameService {
       return { success: false, message: 'Ya respondiste' };
     }
 
-    const selectedOption = currentQ.options.find((o: any) => o.id === optionId);
-    if (!selectedOption) throw new BadRequestException('Opción inválida');
+    let isCorrect = false;
 
-    const isCorrect = selectedOption.isCorrect;
+    switch (currentQ.questionType) {
+      case QuestionType.short_answer:
+        if (typeof answerPayload !== 'string') break;
+        const normalizedAnswer = answerPayload.trim().toLowerCase();
+
+        const validShortAnswers = currentQ.options
+          .filter((o) => o.isCorrect)
+          .map((o) => o.content.trim().toLowerCase());
+
+        if (validShortAnswers.includes(normalizedAnswer)) {
+          isCorrect = true;
+        }
+        break;
+
+      case QuestionType.ordering:
+        if (!Array.isArray(answerPayload)) break;
+
+        const correctOrder = [...currentQ.options]
+          .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+          .map((o) => o.id);
+
+        if (JSON.stringify(answerPayload) === JSON.stringify(correctOrder)) {
+          isCorrect = true;
+        }
+        break;
+
+      case QuestionType.multiple_choice:
+      case QuestionType.true_false:
+      case QuestionType.image_choice:
+      default:
+        if (typeof answerPayload !== 'string') break;
+        const selectedOption = currentQ.options.find(
+          (o) => o.id === answerPayload,
+        );
+        if (selectedOption?.isCorrect) {
+          isCorrect = true;
+        }
+        break;
+    }
 
     let pointsScored = 0;
+
     if (isCorrect) {
+      if (!game.isPublic) {
+        if (game.currentQuestionCorrectAnswersCount >= 5) {
+          return {
+            success: false,
+            message: 'Demasiado tarde, cupo de ganadores lleno',
+          };
+        }
+        game.currentQuestionCorrectAnswersCount++;
+      }
+
       const timeLimitMs = currentQ.timeLimit * 1000;
       const timeFactor = Math.max(0, 1 - timeElapsedMs / timeLimitMs);
       pointsScored = Math.round(currentQ.points * (0.5 + 0.5 * timeFactor));
     }
 
     player.score += pointsScored;
+
+    const stringifiedAnswer =
+      typeof answerPayload === 'string'
+        ? answerPayload
+        : JSON.stringify(answerPayload);
+
     player.responses.push({
       questionId: currentQ.id,
-      optionId,
+      givenAnswer: stringifiedAnswer,
       isCorrect,
       responseTimeMs: timeElapsedMs,
       pointsScored,
@@ -214,11 +299,20 @@ export class GameService {
   getCorrectAnswer(gamePin: string) {
     const game = this.activeGames.get(gamePin);
     if (!game || game.currentQuestionIndex === -1) return null;
+
     const currentQ = game.questions[game.currentQuestionIndex];
-    const correctOptions = currentQ.options
-      .filter((o: any) => o.isCorrect)
-      .map((o: any) => o.id);
-    return correctOptions;
+
+    if (currentQ.questionType === QuestionType.ordering) {
+      return [...currentQ.options]
+        .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+        .map((o) => o.id);
+    }
+
+    if (currentQ.questionType === QuestionType.short_answer) {
+      return currentQ.options.filter((o) => o.isCorrect).map((o) => o.content);
+    }
+
+    return currentQ.options.filter((o) => o.isCorrect).map((o) => o.id);
   }
 
   async finishGame(gamePin: string, hostId: string) {
@@ -256,7 +350,7 @@ export class GameService {
           const formattedResponses = attemptInput.responses.map((r) => ({
             attemptId: attempt.id,
             questionId: r.questionId,
-            givenAnswer: r.optionId,
+            givenAnswer: r.givenAnswer,
             isCorrect: r.isCorrect,
             responseTimeMs: r.responseTimeMs,
           }));
