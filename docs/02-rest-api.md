@@ -71,6 +71,26 @@ Lista paginada de Quizzes públicos (`isPublic: true`).
 }
 ```
 
+### `GET /quizzes/my-quizzes` (Protegido - JWT)
+Lista paginada de todos los Quizzes creados por el usuario autenticado (tanto públicos como privados).
+**Response `data` object (incluye categoría):**
+```json
+{
+  "id": "uuid",
+  "title": "Mi Quiz Privado",
+  "description": "...",
+  "thumbnailUrl": "...",
+  "isPublic": false,
+  "categoryId": "uuid-cat",
+  "creatorId": "uuid-user",
+  "category": {
+    "id": "uuid-cat",
+    "name": "Historia"
+  }
+}
+```
+
+
 ### `GET /quizzes/:id` (Público)
 Trae el detalle **completo** de un Quiz, incluyendo TODAS sus preguntas y TODAS las opciones. (Usado generalmente para visualizar antes de jugar).
 
