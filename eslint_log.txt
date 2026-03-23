@@ -1,0 +1,20 @@
+
+C:\Users\victo\Documents\proyectos\app-trivia-api\src\main.ts
+  38:1  warning  Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator  @typescript-eslint/no-floating-promises
+
+C:\Users\victo\Documents\proyectos\app-trivia-api\src\modules\auth\jwt.strategy.ts
+  15:3   error  Async method 'validate' has no 'await' expression  @typescript-eslint/require-await
+  16:18  error  Unsafe member access .sub on an `any` value        @typescript-eslint/no-unsafe-member-access
+  19:14  error  Unsafe assignment of an `any` value                @typescript-eslint/no-unsafe-assignment
+  19:30  error  Unsafe member access .sub on an `any` value        @typescript-eslint/no-unsafe-member-access
+  19:35  error  Unsafe assignment of an `any` value                @typescript-eslint/no-unsafe-assignment
+  19:50  error  Unsafe member access .email on an `any` value      @typescript-eslint/no-unsafe-member-access
+
+C:\Users\victo\Documents\proyectos\app-trivia-api\src\modules\game\game.gateway.ts
+   67:7  warning  Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator  @typescript-eslint/no-floating-promises
+  112:3  error    Async method 'handleNextQuestion' has no 'await' expression                                                                                                         @typescript-eslint/require-await
+  137:3  error    Async method 'handleSubmitAnswer' has no 'await' expression                                                                                                         @typescript-eslint/require-await
+  177:3  error    Async method 'handleShowCorrectAnswer' has no 'await' expression                                                                                                    @typescript-eslint/require-await
+
+Ô£û 11 problems (9 errors, 2 warnings)
+

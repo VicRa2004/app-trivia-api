@@ -58,17 +58,24 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
 
-      const { game, player } = await this.gameService.joinGame(
+      const { game, player, isHost } = await this.gameService.joinGame(
         data.gamePin,
         userId,
         client.id,
       );
 
-      client.join(data.gamePin);
+      await client.join(data.gamePin);
+
+      if (isHost) {
+        return {
+          event: 'joined',
+          data: { success: true, gamePin: game.gamePin, isHost: true },
+        };
+      }
 
       const currentPlayers = this.gameService.getPlayers(data.gamePin);
       this.server.to(data.gamePin).emit('player_joined', {
-        player: player.username, // Gracias al tipado seguro, player ya no es undefined
+        player: player!.username,
         playersList: currentPlayers,
       });
 
@@ -102,7 +109,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('next_question')
-  async handleNextQuestion(
+  handleNextQuestion(
     @MessageBody() data: { gamePin: string; token: string },
     @ConnectedSocket() client: Socket,
   ) {
@@ -127,7 +134,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('submit_answer')
-  async handleSubmitAnswer(
+  handleSubmitAnswer(
     @MessageBody()
     data: {
       gamePin: string;
@@ -167,7 +174,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('show_correct_answer')
-  async handleShowCorrectAnswer(
+  handleShowCorrectAnswer(
     @MessageBody() data: { gamePin: string; token: string },
     @ConnectedSocket() client: Socket,
   ) {

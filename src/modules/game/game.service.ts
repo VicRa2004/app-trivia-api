@@ -91,6 +91,10 @@ export class GameService {
     if (game.status !== 'waiting')
       throw new BadRequestException('El juego ya ha comenzado');
 
+    if (userId === game.hostId) {
+      return { game, player: null, isHost: true };
+    }
+
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('Usuario no válido');
 
@@ -112,7 +116,7 @@ export class GameService {
       throw new BadRequestException('Error al registrar al jugador en memoria');
     }
 
-    return { game, player: assignedPlayer };
+    return { game, player: assignedPlayer, isHost: false };
   }
 
   getPlayers(gamePin: string) {
@@ -215,7 +219,7 @@ export class GameService {
     let isCorrect = false;
 
     switch (currentQ.questionType) {
-      case QuestionType.short_answer:
+      case QuestionType.short_answer: {
         if (typeof answerPayload !== 'string') break;
         const normalizedAnswer = answerPayload.trim().toLowerCase();
 
@@ -227,8 +231,9 @@ export class GameService {
           isCorrect = true;
         }
         break;
+      }
 
-      case QuestionType.ordering:
+      case QuestionType.ordering: {
         if (!Array.isArray(answerPayload)) break;
 
         const correctOrder = [...currentQ.options]
@@ -239,11 +244,12 @@ export class GameService {
           isCorrect = true;
         }
         break;
+      }
 
       case QuestionType.multiple_choice:
       case QuestionType.true_false:
       case QuestionType.image_choice:
-      default:
+      default: {
         if (typeof answerPayload !== 'string') break;
         const selectedOption = currentQ.options.find(
           (o) => o.id === answerPayload,
@@ -252,6 +258,7 @@ export class GameService {
           isCorrect = true;
         }
         break;
+      }
     }
 
     let pointsScored = 0;
