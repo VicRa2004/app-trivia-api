@@ -83,6 +83,20 @@ export class QuizzesController {
     return this.quizzesService.findAll(paginationDto);
   }
 
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Get('my-quizzes')
+  @ApiOperation({
+    summary:
+      'Obtener lista de quizzes creados por el usuario activo (públicos y privados)',
+  })
+  findAllMyQuizzes(
+    @Query() paginationDto: PaginationDto,
+    @Request() req: RequestWithUser,
+  ) {
+    return this.quizzesService.findAllMyQuizzes(req.user.userId, paginationDto);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Obtener Quiz por ID con sus preguntas' })
   findOne(@Param('id') id: string) {

@@ -55,6 +55,36 @@ export class QuizzesService {
     };
   }
 
+  async findAllMyQuizzes(userId: string, paginationDto: PaginationDto) {
+    const { page = 1, limit = 10 } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      this.prisma.quiz.findMany({
+        where: { creatorId: userId },
+        skip,
+        take: limit,
+        include: {
+          creator: {
+            select: { id: true, username: true },
+          },
+          category: true,
+        },
+      }),
+      this.prisma.quiz.count({ where: { creatorId: userId } }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        lastPage: Math.ceil(total / limit),
+      },
+    };
+  }
+
   async findOne(id: string) {
     const quiz = await this.prisma.quiz.findUnique({
       where: { id },
@@ -114,6 +144,7 @@ export class QuizzesService {
         questionText: dto.questionText,
         questionType: dto.questionType,
         explanation: dto.explanation,
+        imageUrl: dto.imageUrl,
         points: dto.points ?? 1000,
         timeLimit: dto.timeLimit ?? 20,
         orderNumber: dto.orderNumber,
@@ -155,6 +186,7 @@ export class QuizzesService {
         questionText: dto.questionText,
         questionType: dto.questionType,
         explanation: dto.explanation,
+        imageUrl: dto.imageUrl,
         points: dto.points,
         timeLimit: dto.timeLimit,
         orderNumber: dto.orderNumber,
