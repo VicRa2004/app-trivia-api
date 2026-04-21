@@ -177,3 +177,66 @@ Sustituye propiedades de la pregunta y **reemplaza por completo** las opciones s
 
 ### `DELETE /quizzes/:quizId/questions/:questionId`
 Elimina la pregunta y automáticamente sus opciones en la base de datos (Cascade).
+
+---
+
+## 2.5. Endpoints: Avatares
+
+### `GET /avatars` (Público)
+Devuelve lista paginada de avatares disponibles y activos.
+
+**Response `data` object:**
+```json
+{
+  "id": "uuid",
+  "name": "Astronauta",
+  "imageUrl": "/avatars/astronauta.png",
+  "isActive": true,
+  "createdAt": "2026-04-21T00:00:00.000Z"
+}
+```
+
+### `GET /avatars/:id` (Público)
+Devuelve el detalle de un avatar específico.
+
+---
+
+## 2.6. Endpoints: Users (Usuarios)
+
+### `GET /users` (Protegido - JWT)
+Devuelve lista paginada de usuarios. Cada usuario incluye su `avatar` seleccionado.
+
+**Response `data` object:**
+```json
+{
+  "id": "uuid",
+  "fullName": "Juan Pérez",
+  "username": "juanp",
+  "email": "juan@example.com",
+  "age": 25,
+  "preferredLanguage": "es",
+  "createdAt": "2026-04-21T00:00:00.000Z",
+  "avatar": {
+    "id": "uuid",
+    "name": "Astronauta",
+    "imageUrl": "/avatars/astronauta.png"
+  }
+}
+```
+
+### `GET /users/:id` (Protegido - JWT)
+Devuelve el detalle de un usuario con su avatar.
+
+### `PATCH /users/:id` (Protegido - JWT)
+Actualiza los datos de un usuario. Se puede cambiar el `avatarId` para seleccionar otro avatar.
+
+**Body (todos los campos opcionales):**
+```json
+{
+  "fullName": "Nuevo Nombre",
+  "avatarId": "uuid-del-nuevo-avatar"
+}
+```
+
+### `DELETE /users/:id` (Protegido - JWT)
+Elimina un usuario y todos sus datos asociados (quizzes, partidas, respuestas).

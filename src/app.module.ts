@@ -6,6 +6,7 @@ import { QuizzesModule } from './modules/quizzes/quizzes.module';
 import { GameModule } from './modules/game/game.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { AvatarsModule } from './modules/avatars/avatars.module';
 import { PrismaModule } from './prisma.module';
 
 @Module({
@@ -16,6 +17,7 @@ import { PrismaModule } from './prisma.module';
     GameModule,
     CategoriesModule,
     AuthModule,
+    AvatarsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -24,6 +24,7 @@ export class UsersService {
           age: true,
           preferredLanguage: true,
           createdAt: true,
+          avatar: true,
         },
       }),
       this.prisma.user.count(),
@@ -51,6 +52,7 @@ export class UsersService {
         age: true,
         preferredLanguage: true,
         createdAt: true,
+        avatar: true,
       },
     });
 
@@ -61,7 +63,6 @@ export class UsersService {
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
-    // Check if user exists
     await this.findOne(id);
 
     return this.prisma.user.update({
@@ -72,6 +73,7 @@ export class UsersService {
         fullName: true,
         username: true,
         email: true,
+        avatar: true,
       },
     });
   }

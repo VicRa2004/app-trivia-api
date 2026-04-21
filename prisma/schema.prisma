@@ -33,6 +33,18 @@ model Category {
   @@map("categories")
 }
 
+model Avatar {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @db.VarChar(50)
+  imageUrl  String   @map("image_url")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  users User[]
+
+  @@map("avatars")
+}
+
 model User {
   id                String   @id @default(uuid()) @db.Uuid
   fullName          String   @map("full_name") @db.VarChar(100)
@@ -40,9 +52,11 @@ model User {
   email             String   @unique @db.VarChar(150)
   passwordHash      String   @map("password_hash")
   age               Int?
-  profilePictureUrl String?  @map("profile_picture_url")
   preferredLanguage String   @default("es") @map("preferred_language") @db.VarChar(5)
   createdAt         DateTime @default(now()) @map("created_at")
+
+  avatarId String? @map("avatar_id") @db.Uuid
+  avatar   Avatar? @relation(fields: [avatarId], references: [id], onDelete: SetNull)
 
   quizzes        Quiz[]        @relation("UserQuizzes")
   attempts       Attempt[]

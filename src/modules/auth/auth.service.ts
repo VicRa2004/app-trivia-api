@@ -8,12 +8,14 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { AvatarsService } from '../avatars/avatars.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private avatarsService: AvatarsService,
   ) {}
 
   async register(data: RegisterDto) {
@@ -31,6 +33,7 @@ export class AuthService {
 
     const salt = await bcrypt.genSalt();
     const passwordHash = await bcrypt.hash(data.password, salt);
+    const defaultAvatarId = await this.avatarsService.findDefault();
 
     const user = await this.prisma.user.create({
       data: {
@@ -40,12 +43,14 @@ export class AuthService {
         passwordHash,
         age: data.age,
         preferredLanguage: data.preferredLanguage,
+        avatarId: defaultAvatarId,
       },
       select: {
         id: true,
         fullName: true,
         username: true,
         email: true,
+        avatar: true,
       },
     });
 
