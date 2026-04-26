@@ -8,9 +8,15 @@ import { CategoriesModule } from './modules/categories/categories.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AvatarsModule } from './modules/avatars/avatars.module';
 import { PrismaModule } from './prisma.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { resolve } from 'path';
 
 @Module({
   imports: [
+    ServeStaticModule.forRoot({
+      rootPath: resolve('public'),
+      serveRoot: '/public',
+    }),
     PrismaModule,
     UsersModule,
     QuizzesModule,

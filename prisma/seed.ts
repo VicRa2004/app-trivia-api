@@ -9,9 +9,18 @@ const prisma = new PrismaClient({
 
 async function main() {
   const avatars = [
-    { name: 'Astronauta', imageUrl: '/avatars/astronauta.png' },
-    { name: 'Gato', imageUrl: '/avatars/gato.png' },
-    { name: 'Robot', imageUrl: '/avatars/robot.png' },
+    { name: 'Avatar 1', imageUrl: '/avatar/avatar-01.jpg' },
+    { name: 'Avatar 2', imageUrl: '/avatar/avatar-02.jpg' },
+    { name: 'Avatar 3', imageUrl: '/avatar/avatar-03.jpg' },
+    { name: 'Avatar 4', imageUrl: '/avatar/avatar-04.jpg' },
+    { name: 'Avatar 5', imageUrl: '/avatar/avatar-05.jpg' },
+    { name: 'Avatar 6', imageUrl: '/avatar/avatar-06.jpg' },
+    { name: 'Avatar 7', imageUrl: '/avatar/avatar-07.jpg' },
+    { name: 'Avatar 8', imageUrl: '/avatar/avatar-08.jpg' },
+    { name: 'Avatar 9', imageUrl: '/avatar/avatar-09.jpg' },
+    { name: 'Avatar 10', imageUrl: '/avatar/avatar-10.jpg' },
+    { name: 'Avatar 11', imageUrl: '/avatar/avatar-11.jpg' },
+    { name: 'Avatar 12', imageUrl: '/avatar/avatar-12.jpg' },
   ];
 
   for (const avatar of avatars) {
