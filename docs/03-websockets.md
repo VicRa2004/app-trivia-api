@@ -2,17 +2,32 @@
 
 Toda la lógica en tiempo real para replicar una experiencia tipo Kahoot! vive en un Gateway de Socket.IO.
 
-**URL del WebSocker:** `ws://localhost:3000` (El cliente oficial de Socket.io la resolverá como `http://localhost:3000`).
+**URL del WebSocket:**
+
+- **Localhost:** `ws://localhost:3000` (desarrollo en tu máquina)
+- **Red local (IP):** `ws://192.168.X.X:3000` (sustituir con tu IP local)
+
+El cliente oficial de Socket.io la resolverá automáticamente.
+
+### 🌐 Configuración para Red Local
+
+Si tu frontend está en otra máquina de la red local, asegúrate de que:
+
+1. El servidor backend escucha en `0.0.0.0:3000` (escucha todas las interfaces)
+2. El frontend se conecta a `http://IP_DEL_SERVIDOR:3000` (no `localhost`)
+3. La variable de entorno `FRONT_URL` esté configurada (ej: `FRONT_URL=http://192.168.1.100:5173`)
 
 Para iniciar todo esto, el **Host/Presentador** debe crear la partida mediante REST HTTP:
-**`POST /game/create/:quizId`** *(Protegido con JWT)*
+**`POST /game/create/:quizId`** _(Protegido con JWT)_
 Respuesta de éxito:
+
 ```json
 {
   "gamePin": "123456",
   "sessionId": "uuid-game-session"
 }
 ```
+
 Con ese `gamePin`, todos (jugadores y Host) están listos para entrar al cuarto de Sockets.
 
 > ⚠️ Todos los eventos EMITIDOS que verás abajo requieren un Payload base para autenticarte frente al Socket y asociarte al cuarto correcto:
@@ -24,6 +39,7 @@ Con ese `gamePin`, todos (jugadores y Host) están listos para entrar al cuarto 
 
 **[JUGADOR O HOST] Emite `join_game`**
 Payload:
+
 ```json
 {
   "gamePin": "123456",
@@ -34,6 +50,7 @@ Payload:
 **[TODOS] Escuchan `player_joined`**
 Una vez un jugador valida su PIN y Token, Socket.io avisa (Broadcast) a toda la sala de su llegada.
 Payload:
+
 ```json
 {
   "player": "juanp",
@@ -43,7 +60,8 @@ Payload:
   ]
 }
 ```
-*Útil para que el Celular diga "¡Estás dentro!" y que la Pantalla del Host dibuje los nombres saltando.*
+
+_Útil para que el Celular diga "¡Estás dentro!" y que la Pantalla del Host dibuje los nombres saltando._
 
 ---
 
@@ -55,6 +73,7 @@ Payload:
 **[TODOS] Escuchan `game_started`**
 Notifica que acabó el lobby.
 Payload:
+
 ```json
 {
   "message": "¡El host ha iniciado la partida! Preparaos..."
@@ -71,6 +90,7 @@ Payload:
 **[TODOS] Escuchan `new_question`** (o `all_questions_ended`)
 El servidor escupe la pregunta actual para todos los tableros.
 Payload `new_question`:
+
 ```json
 {
   "index": 0,
@@ -89,7 +109,9 @@ Payload `new_question`:
   }
 }
 ```
+
 Si ya se agotaron las preguntas, el payload que escucharán es `all_questions_ended`:
+
 ```json
 {
   "message": "Fin de las preguntas."
@@ -105,6 +127,7 @@ Envía al servidor su elección final y cuánto tardó en picarla. Esto varía f
 
 **Ejemplo 1 (Standard): Múltiple, True/False, Imagen**
 Envía directamente el **ID UUID** de la opción elegida.
+
 ```json
 {
   "gamePin": "123456",
@@ -116,6 +139,7 @@ Envía directamente el **ID UUID** de la opción elegida.
 
 **Ejemplo 2 (Respuesta Corta - Texto Libre)**
 Envía el **String / Texto** tal cual lo tecleó el jugador. El servidor se encarga de cruzarlo en minúsculas y limpiarlo automáticamente.
+
 ```json
 {
   "gamePin": "123456",
@@ -127,6 +151,7 @@ Envía el **String / Texto** tal cual lo tecleó el jugador. El servidor se enca
 
 **Ejemplo 3 (Ordering - Ordenamiento)**
 Envía un **Array** de UUIDs con el orden final en el que el Jugador armó su bloque.
+
 ```json
 {
   "gamePin": "123456",
@@ -136,11 +161,12 @@ Envía un **Array** de UUIDs con el orden final en el que el Jugador armó su bl
 }
 ```
 
-*(Se usa `timeElapsedMs` para penalizar la lentitud. Responder rápido = más puntos. El servidor te cruzará en Base de Datos este dato con el Top 5 en caso de que la Trivia estuviera configurada como Privada)*.
+_(Se usa `timeElapsedMs` para penalizar la lentitud. Responder rápido = más puntos. El servidor te cruzará en Base de Datos este dato con el Top 5 en caso de que la Trivia estuviera configurada como Privada)_.
 
 **[JUGADOR] Escucha `answer_received`** (Esto SÓLO le llega a quien respondió).
 El servidor acusa recibo, valida si es correcta temporalmente en RAM y actualiza su score local.
 Payload `answer_received`:
+
 ```json
 {
   "success": true,
@@ -148,18 +174,20 @@ Payload `answer_received`:
   "newScore": 1450
 }
 ```
-*Si falló, lanzará puntos cero. Si la Trivia es Privada y contestaste correcto pero ya hubo 5 ganadores antes de ti, el servidor descartará tus puntos y emitirá `success: false, message: "Demasiado tarde, cupo de ganadores lleno"`.*
+
+_Si falló, lanzará puntos cero. Si la Trivia es Privada y contestaste correcto pero ya hubo 5 ganadores antes de ti, el servidor descartará tus puntos y emitirá `success: false, message: "Demasiado tarde, cupo de ganadores lleno"`._
 
 ---
 
 ## 3.5. Ciclo de Preguntas: Revelar (`show_correct_answer`)
 
 **[HOST] Emite `show_correct_answer`**
-*(Cuando su temporizador gigante de 20s en UI llega a 0)*.
+_(Cuando su temporizador gigante de 20s en UI llega a 0)_.
 
 **[TODOS] Escuchan `correct_answer_revealed`**
 El servidor quita el velo, dice quién tenía la razón y genera un mini PODIO PARCIAL para actualizar posiciones en pantalla (Top 5).
 Payload `correct_answer_revealed`:
+
 ```json
 {
   "correctOptions": ["uuid-o2"],
@@ -169,7 +197,8 @@ Payload `correct_answer_revealed`:
   ]
 }
 ```
-*(El ciclo vuelve a repetirse desde el paso 3.3 con el Host apretando "Siguiente Pregunta").*
+
+_(El ciclo vuelve a repetirse desde el paso 3.3 con el Host apretando "Siguiente Pregunta")._
 
 ---
 
@@ -180,6 +209,7 @@ Payload `correct_answer_revealed`:
 **[TODOS] Escuchan `game_finished`**
 El servidor cierra la sala entera, toma todos los puntos de la memoria RAM y hace un **DUMP transaccional en PostgreSQL** creando la tabla `Attempt` para registrar la jugada real con el progreso en Score, Responses y Timestamps de todos.
 Payload `game_finished`:
+
 ```json
 {
   "message": "El juego ha finalizado. Aquí los resultados:",
@@ -190,4 +220,5 @@ Payload `game_finished`:
   ]
 }
 ```
+
 Inmediatamente tras recibir esto, el Servidor va a expulsar forzosamente (disconnect/leave) a todos los Sockets involucrados en la sala `"123456"` para prevenir inyección de cache fantasma.

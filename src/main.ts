@@ -2,13 +2,14 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { frontUrl, getCorsOrigin } from './config/env';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Habilitar CORS para HTTP
   app.enableCors({
-    origin: 'http://localhost:5173', // El puerto exacto de tu frontend
+    origin: getCorsOrigin(),
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true, // Clave si más adelante usas cookies o sesiones
   });

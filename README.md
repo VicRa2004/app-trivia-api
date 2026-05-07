@@ -81,12 +81,51 @@ npm run start:dev
 
 ---
 
+## 🌐 Configuración para Red Local
+
+Si deseas usar la API desde otra máquina en tu red local (usando IP), sigue estos pasos:
+
+**1. Identifica tu IP local:**
+
+```bash
+# En Windows
+ipconfig
+
+# En Linux/Mac
+ifconfig
+```
+
+Busca algo como `192.168.X.X` o `10.X.X.X`.
+
+**2. Actualiza el archivo `.env`:**
+
+```env
+DATABASE_URL="postgresql://usuario:password@localhost:5432/trivia_db?schema=public"
+JWT_SECRET="mi_palabra_secreta_super_segura"
+PORT=3000
+FRONT_URL=http://192.168.X.X:5173  # 👈 Sustituir con tu IP
+```
+
+**3. Levanta el servidor:**
+
+```bash
+npm run start:dev
+```
+
+El servidor ahora escuchará en todas las interfaces (`0.0.0.0:3000`) y aceptará conexiones desde tu IP.
+
+**4. Configura el Frontend:**
+Ver [Guía de Setup del Frontend](./docs/06-setup-frontend.md) para instrucciones específicas de React + Vite.
+
+---
+
 ## Documentación
 
 No estás solo en esto. Hemos preparado recursos para facilitarte la vida consumiendo esta API.
 
 - **[Documentación del Frontend](./docs/README.md)**: Aquí encontrarás explícitamente **TODOS LOS EVENTOS** de WebSockets cómo funcionan y cómo atraparlos (Módulo de Juego).
-- **[Open API / Swagger]**: Estando el servidor encendido, dirígete a `http://localhost:3000/api` en tu navegador web. Verás una interfaz de pruebas viva y las maquetas (DTOs) completas de cada ruta REST.
+- **[Guía de Setup del Frontend React + Vite](./docs/06-setup-frontend.md)**: Configuración completa para conectar tu frontend a la API desde red local.
+- **[Open API / Swagger]**: Estando el servidor encendido, dirígete a `http://localhost:3000/api` (o tu IP) en tu navegador web. Verás una interfaz de pruebas viva y las maquetas (DTOs) completas de cada ruta REST.
 
 ---
 

@@ -19,6 +19,8 @@ interface JwtPayload {
   exp: number;
 }
 
+// CORS abierto (*) en WebSocket ya que la autenticación se valida con JWT
+// Todos los eventos requieren un token válido (ver extractUserId)
 @WebSocketGateway({ cors: { origin: '*' } })
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
