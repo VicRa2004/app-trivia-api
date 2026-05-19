@@ -15,6 +15,7 @@ export interface PlayerState {
   socketId: string;
   userId: string;
   username: string;
+  avatarUrl?: string;
   score: number;
   responses: Array<{
     questionId: string;
@@ -88,24 +89,44 @@ export class GameService {
   async joinGame(gamePin: string, userId: string, socketId: string) {
     const game = this.activeGames.get(gamePin);
     if (!game) throw new NotFoundException('PIN de juego inválido o inactivo');
-    if (game.status !== 'waiting')
-      throw new BadRequestException('El juego ya ha comenzado');
 
-    if (userId === game.hostId) {
+    const isHost = userId === game.hostId;
+    const isExistingPlayer = game.players.has(userId);
+
+    console.log('[DEBUG joinGame] gamePin:', gamePin);
+    console.log('[DEBUG joinGame] userId:', userId);
+    console.log('[DEBUG joinGame] game.hostId:', game.hostId);
+    console.log('[DEBUG joinGame] isHost:', isHost);
+    console.log('[DEBUG joinGame] isExistingPlayer:', isExistingPlayer);
+
+    // Permitir reconexión de host o jugador existente si el juego ya inició.
+    // Solo bloquear si es un jugador nuevo tratando de entrar a una partida en curso.
+    if (!isHost && !isExistingPlayer && game.status !== 'waiting') {
+      throw new BadRequestException('El juego ya ha comenzado');
+    }
+
+    if (isHost) {
       return { game, player: null, isHost: true };
     }
 
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { avatar: true },
+    });
     if (!user) throw new NotFoundException('Usuario no válido');
 
     if (game.players.has(userId)) {
       const existingPlayer = game.players.get(userId);
-      if (existingPlayer) existingPlayer.socketId = socketId;
+      if (existingPlayer) {
+        existingPlayer.socketId = socketId;
+        existingPlayer.avatarUrl = user.avatar?.imageUrl;
+      }
     } else {
       game.players.set(userId, {
         socketId,
         userId,
         username: user.username,
+        avatarUrl: user.avatar?.imageUrl,
         score: 0,
         responses: [],
       });
@@ -126,7 +147,23 @@ export class GameService {
       userId: p.userId,
       username: p.username,
       score: p.score,
+      avatarUrl: p.avatarUrl,
     }));
+  }
+
+  getAnswersCountForCurrentQuestion(gamePin: string) {
+    const game = this.activeGames.get(gamePin);
+    if (!game) return { answered: 0, total: 0 };
+    const currentQ = game.questions[game.currentQuestionIndex];
+    if (!currentQ) return { answered: 0, total: game.players.size };
+
+    let answered = 0;
+    for (const player of game.players.values()) {
+      if (player.responses.some((r) => r.questionId === currentQ.id)) {
+        answered++;
+      }
+    }
+    return { answered, total: game.players.size };
   }
 
   async startGame(gamePin: string, hostId: string) {

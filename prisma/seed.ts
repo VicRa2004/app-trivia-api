@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { randomUUID } from 'crypto';
-import { PrismaClient } from '../src/generated/prisma/client.js';
+import { PrismaClient } from '../src/generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 
 const prisma = new PrismaClient({
@@ -24,18 +24,45 @@ async function main() {
   ];
 
   for (const avatar of avatars) {
-    await prisma.avatar.upsert({
-      where: { id: randomUUID() },
-      update: {},
-      create: {
-        id: randomUUID(),
-        name: avatar.name,
-        imageUrl: avatar.imageUrl,
-      },
+    const existing = await prisma.avatar.findFirst({
+      where: { name: avatar.name },
     });
+    if (!existing) {
+      await prisma.avatar.create({
+        data: {
+          name: avatar.name,
+          imageUrl: avatar.imageUrl,
+        },
+      });
+    }
   }
-
   console.log('Avatars seeded successfully');
+
+  const categories = [
+    { name: 'Ciencia', iconUrl: 'science' },
+    { name: 'Historia', iconUrl: 'history' },
+    { name: 'Arte y Literatura', iconUrl: 'art' },
+    { name: 'Geografía', iconUrl: 'geography' },
+    { name: 'Deportes', iconUrl: 'sports' },
+    { name: 'Entretenimiento', iconUrl: 'entertainment' },
+    { name: 'Tecnología', iconUrl: 'technology' },
+    { name: 'Cultura General', iconUrl: 'general' },
+  ];
+
+  for (const category of categories) {
+    const existing = await prisma.category.findUnique({
+      where: { name: category.name },
+    });
+    if (!existing) {
+      await prisma.category.create({
+        data: {
+          name: category.name,
+          iconUrl: category.iconUrl,
+        },
+      });
+    }
+  }
+  console.log('Categories seeded successfully');
 }
 
 main()

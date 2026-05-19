@@ -57,7 +57,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const userId = this.extractUserId(data.token);
       if (!userId) {
         client.emit('error', { message: 'Token inválido o expirado' });
-        return;
+        return { success: false, message: 'Token inválido o expirado' };
       }
 
       const { game, player, isHost } = await this.gameService.joinGame(
@@ -68,26 +68,62 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       await client.join(data.gamePin);
 
-      if (isHost) {
-        return {
-          event: 'joined',
-          data: { success: true, gamePin: game.gamePin, isHost: true },
+      const currentPlayers = this.gameService.getPlayers(data.gamePin);
+
+      let currentQuestion: any = null;
+      if (game.currentQuestionIndex >= 0 && game.currentQuestionIndex < game.questions.length) {
+        const q = game.questions[game.currentQuestionIndex];
+        currentQuestion = {
+          id: q.id,
+          text: q.questionText,
+          type: q.questionType,
+          imageUrl: q.imageUrl,
+          points: q.points,
+          timeLimit: q.timeLimit,
+          options: q.options.map(opt => ({
+            id: opt.id,
+            content: opt.content,
+            imageUrl: opt.imageUrl,
+            position: opt.position,
+          }))
         };
       }
 
-      const currentPlayers = this.gameService.getPlayers(data.gamePin);
+      if (isHost) {
+        console.log('[DEBUG Gateway] Host joined successfully:', game.gamePin);
+        return {
+          success: true,
+          gamePin: game.gamePin,
+          isHost: true,
+          playersList: currentPlayers,
+          status: game.status,
+          currentQuestion,
+          currentQuestionIndex: game.currentQuestionIndex,
+          totalQuestions: game.questions.length,
+        };
+      }
+
+      console.log('[DEBUG Gateway] Player joined successfully:', player!.username);
       this.server.to(data.gamePin).emit('player_joined', {
         player: player!.username,
         playersList: currentPlayers,
       });
 
       return {
-        event: 'joined',
-        data: { success: true, gamePin: game.gamePin },
+        success: true,
+        gamePin: game.gamePin,
+        isHost: false,
+        playersList: currentPlayers,
+        status: game.status,
+        currentQuestion,
+        currentQuestionIndex: game.currentQuestionIndex,
+        totalQuestions: game.questions.length,
       };
     } catch (error: unknown) {
       const err = error as Error;
+      console.error('[DEBUG Gateway] Error in handleJoinGame:', err);
       client.emit('error', { message: err.message || 'Error desconocido' });
+      return { success: false, message: err.message || 'Error desconocido' };
     }
   }
 
@@ -161,8 +197,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         client.emit('answer_received', {
           success: true,
           pointsScored: result.pointsScored,
+          isCorrect: result.isCorrect,
           newScore: result.newScore,
         });
+
+        // Broadcast updated answers count to the room
+        const count = this.gameService.getAnswersCountForCurrentQuestion(data.gamePin);
+        this.server.to(data.gamePin).emit('answers_count_updated', count);
       } else {
         client.emit('answer_received', {
           success: false,
