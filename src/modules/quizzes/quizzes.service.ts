@@ -93,7 +93,18 @@ export class QuizzesService {
           select: { id: true, username: true },
         },
         category: true,
-        questions: true,
+        questions: {
+          orderBy: {
+            orderNumber: 'asc',
+          },
+          include: {
+            options: {
+              orderBy: {
+                position: 'asc',
+              },
+            },
+          },
+        },
       },
     });
 
