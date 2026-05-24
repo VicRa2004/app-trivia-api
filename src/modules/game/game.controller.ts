@@ -1,4 +1,4 @@
-import { Controller, Post, Param, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Get, Param, UseGuards, Request } from '@nestjs/common';
 import { GameService } from './game.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import type { RequestWithUser } from '../../common/interfaces/request-with-user.interface';
@@ -34,4 +34,15 @@ export class GameController {
   ) {
     return this.gameService.createSession(quizId, req.user.userId);
   }
+
+  @Get('history')
+  @ApiOperation({ summary: 'Obtener el historial de partidas hosteadas por el usuario' })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de partidas terminadas creadas por el usuario, incluyendo puntajes',
+  })
+  getHostHistory(@Request() req: RequestWithUser) {
+    return this.gameService.getHostHistory(req.user.userId);
+  }
 }
+

@@ -425,5 +425,40 @@ export class GameService {
     }
     return null;
   }
+
+  async getHostHistory(hostId: string) {
+    return this.prisma.gameSession.findMany({
+      where: {
+        hostId,
+        status: 'finished',
+      },
+      include: {
+        quiz: {
+          select: {
+            title: true,
+            thumbnailUrl: true,
+          },
+        },
+        attempts: {
+          select: {
+            id: true,
+            totalScore: true,
+            user: {
+              select: {
+                username: true,
+              },
+            },
+          },
+          orderBy: {
+            totalScore: 'desc',
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
 }
+
 

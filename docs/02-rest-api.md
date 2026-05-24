@@ -240,3 +240,62 @@ Actualiza los datos de un usuario. Se puede cambiar el `avatarId` para seleccion
 
 ### `DELETE /users/:id` (Protegido - JWT)
 Elimina un usuario y todos sus datos asociados (quizzes, partidas, respuestas).
+
+---
+
+## 2.7. Endpoints: Game (Juegos y Salas)
+
+### `POST /game/create/:quizId` (Protegido - JWT)
+Crea una nueva sala de juego para la trivia indicada por `:quizId`. Genera un PIN único que servirá para que los jugadores se conecten vía WebSockets.
+
+**Response (201 Created):**
+```json
+{
+  "gamePin": "123456",
+  "sessionId": "d8c2e6f4-b9b5-412d-a2f0-f9e0ebc1b0c9"
+}
+```
+
+### `GET /game/history` (Protegido - JWT)
+Obtiene la lista de todas las partidas de trivias creadas por el usuario autenticado que hayan sido finalizadas exitosamente (`status: finished`).
+
+**Response (200 OK):**
+```json
+[
+  {
+    "id": "d8c2e6f4-b9b5-412d-a2f0-f9e0ebc1b0c9",
+    "quizId": "b4a1c5d6-e2a1-432d-8f92-c1e0ebc5b0f1",
+    "hostId": "123e4567-e89b-12d3-a456-426614174000",
+    "gamePin": "123456",
+    "status": "finished",
+    "currentQuestionIndex": 4,
+    "maxPlayers": 5,
+    "createdAt": "2026-05-24T02:00:00.000Z",
+    "quiz": {
+      "title": "Mitología Griega",
+      "thumbnailUrl": "https://url.com/mitologia.jpg"
+    },
+    "attempts": [
+      {
+        "id": "e7c1f8d4-a9b5-412d-b2c0-e9e0fbc1b0c9",
+        "totalScore": 2500,
+        "user": {
+          "username": "jugador_uno"
+        }
+      },
+      {
+        "id": "f8d2e6a4-c9b5-412d-a2f0-f9e0ebc1b0a9",
+        "totalScore": 1800,
+        "user": {
+          "username": "jugador_dos"
+        }
+      }
+    ]
+  }
+]
+```
+
+### Contexto para IA (Prompts Futuros):
+> [!IMPORTANT]
+> **Instrucciones de integración:** El endpoint de historial devuelve los intentos (`attempts`) ya ordenados de mayor a menor puntuación (`totalScore DESC`). Utiliza este orden predeterminado en el frontend para dibujar el podio directamente sin necesidad de reordenar en memoria.
+
