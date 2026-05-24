@@ -414,4 +414,16 @@ export class GameService {
 
     return podium;
   }
+
+  handlePlayerDisconnect(socketId: string) {
+    for (const game of this.activeGames.values()) {
+      for (const player of game.players.values()) {
+        if (player.socketId === socketId) {
+          return { gamePin: game.gamePin, username: player.username };
+        }
+      }
+    }
+    return null;
+  }
 }
+

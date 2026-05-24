@@ -37,6 +37,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleDisconnect(client: Socket) {
     console.log(`Cliente desconectado: ${client.id}`);
+    const disconnectedInfo = this.gameService.handlePlayerDisconnect(client.id);
+    if (disconnectedInfo) {
+      this.server.to(disconnectedInfo.gamePin).emit('player_disconnected', {
+        player: disconnectedInfo.username,
+        playersList: this.gameService.getPlayers(disconnectedInfo.gamePin),
+      });
+    }
   }
 
   private extractUserId(token: string): string | null {
@@ -140,6 +147,12 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.server.to(data.gamePin).emit('game_started', {
         message: '¡El host ha iniciado la partida! Preparaos...',
       });
+
+      // Avanzar automáticamente a la primera pregunta
+      const nextQ = this.gameService.nextQuestion(data.gamePin, userId);
+      if (nextQ) {
+        this.server.to(data.gamePin).emit('new_question', nextQ);
+      }
     } catch (error: unknown) {
       const err = error as Error;
       client.emit('error', { message: err.message || 'Error desconocido' });
@@ -204,6 +217,17 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         // Broadcast updated answers count to the room
         const count = this.gameService.getAnswersCountForCurrentQuestion(data.gamePin);
         this.server.to(data.gamePin).emit('answers_count_updated', count);
+
+        // Si todos los jugadores han respondido, revelar la respuesta correcta automáticamente
+        if (count.total > 0 && count.answered === count.total) {
+          const correctOptions = this.gameService.getCorrectAnswer(data.gamePin);
+          const players = this.gameService.getPlayers(data.gamePin);
+
+          this.server.to(data.gamePin).emit('correct_answer_revealed', {
+            correctOptions,
+            currentRanking: players.sort((a, b) => b.score - a.score).slice(0, 5),
+          });
+        }
       } else {
         client.emit('answer_received', {
           success: false,
