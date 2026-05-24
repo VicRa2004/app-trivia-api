@@ -10,6 +10,7 @@ import { AvatarsModule } from './modules/avatars/avatars.module';
 import { PrismaModule } from './prisma.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { resolve } from 'path';
+import { AiModule } from './modules/ai/ai.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { resolve } from 'path';
     CategoriesModule,
     AuthModule,
     AvatarsModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [AppService],

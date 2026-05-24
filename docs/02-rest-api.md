@@ -299,3 +299,44 @@ Obtiene la lista de todas las partidas de trivias creadas por el usuario autenti
 > [!IMPORTANT]
 > **Instrucciones de integración:** El endpoint de historial devuelve los intentos (`attempts`) ya ordenados de mayor a menor puntuación (`totalScore DESC`). Utiliza este orden predeterminado en el frontend para dibujar el podio directamente sin necesidad de reordenar en memoria.
 
+---
+
+## 2.8. Endpoints: AI (Inteligencia Artificial)
+
+### `POST /ai/chat` (Público)
+
+**Descripción:** Envía un mensaje a la IA para resolver dudas generales sobre la aplicación, su arquitectura, el flujo de juego en tiempo real o sus comandos de desarrollo.
+
+#### Para el Frontend:
+- **Cuándo llamarlo:** Llamar a este endpoint cuando el usuario envía un mensaje de texto en la ventana del chat flotante de IA.
+- **Body / Params necesarios:**
+  ```json
+  {
+    "message": "string (Requerido) - El mensaje del usuario",
+    "history": "array (Opcional) - El historial de la conversación hasta el momento"
+  }
+  ```
+  Estructura de cada elemento del array `history`:
+  ```json
+  {
+    "role": "user | model",
+    "parts": [
+      {
+        "text": "Contenido del mensaje"
+      }
+    ]
+  }
+  ```
+- **Respuesta Exitosa (201 Created):**
+  ```json
+  {
+    "text": "Respuesta en texto generada por la IA sobre la aplicación."
+  }
+  ```
+- **Posibles Errores:**
+  - `500 Internal Server Error`: Ocurre si hay problemas de conexión con la API de Gemini (por ejemplo, falta la API Key en las variables de entorno).
+
+#### Contexto para IA (Prompts Futuros):
+> [!IMPORTANT]
+> **Instrucciones de integración:** El historial debe ser acumulado en el frontend y enviado en cada nueva petición para que el modelo mantenga el contexto de la conversación. No modifiques la estructura de `parts` ya que sigue el formato del nuevo SDK `@google/genai`.
+
