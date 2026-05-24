@@ -1,6 +1,8 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { GoogleGenAI } from '@google/genai';
 import { ChatRequestDto } from './dto/chat-request.dto';
+import { GenerateQuizDto } from './dto/generate-quiz.dto';
+import { PrismaService } from '../../prisma.service';
 
 const SYSTEM_INSTRUCTION = `Eres Trivia AI, el asistente virtual inteligente oficial de TriviaApp. Tu propósito es resolver dudas sobre el funcionamiento de la aplicación, su arquitectura, sus características y cómo jugar.
 
@@ -31,10 +33,9 @@ Reglas de respuesta:
 export class AiService {
   private ai: GoogleGenAI;
 
-  constructor() {
+  constructor(private prisma: PrismaService) {
     const apiKey = process.env.API_KEY_GEMINI;
     if (!apiKey) {
-      // Si no está la variable local, usa la inicialización por defecto (leerá GEMINI_API_KEY)
       this.ai = new GoogleGenAI({});
     } else {
       this.ai = new GoogleGenAI({ apiKey });
@@ -62,6 +63,128 @@ export class AiService {
     } catch (error) {
       console.error('Error calling Gemini API:', error);
       throw new InternalServerErrorException('Error al comunicarse con la Inteligencia Artificial.');
+    }
+  }
+
+  async generateQuiz(dto: GenerateQuizDto, userId: string) {
+    try {
+      let categoryName = '';
+      if (dto.categoryId) {
+        const category = await this.prisma.category.findUnique({
+          where: { id: dto.categoryId },
+        });
+        if (category) {
+          categoryName = category.name;
+        }
+      }
+
+      const prompt = `Genera un quiz completo sobre el tema: "${dto.theme}".
+El quiz debe estar en español y tener exactamente ${dto.numQuestions} preguntas.
+${categoryName ? `El quiz pertenece a la categoría: "${categoryName}".` : ''}
+
+Requisitos para las preguntas:
+- Distribuye las preguntas utilizando una mezcla de los siguientes tipos si es posible:
+  1. "multiple_choice": Pregunta de opción múltiple clásica con exactamente 4 opciones de respuesta, donde exactamente una de ellas tiene isCorrect=true.
+  2. "true_false": Pregunta de Verdadero o Falso. Debe tener exactamente 2 opciones de respuesta (cuyos contenidos deben ser exactamente "Verdadero" y "Falso"), y exactamente una de ellas tiene isCorrect=true.
+  3. "short_answer": Pregunta con respuesta corta de texto libre. Debe tener exactamente 1 opción que contiene la respuesta exacta correcta en minúsculas, con isCorrect=true.
+  4. "ordering": Pregunta de ordenar elementos. Debe tener entre 3 y 4 opciones, cada una con un campo "position" indicando su orden correcto (comenzando en 1, ej. 1, 2, 3). Todas las opciones deben tener isCorrect=true ya que todas forman parte del orden correcto.
+- Los puntos de cada pregunta deben ser entre 1000 y 1500 (ej. 1000 por defecto).
+- El límite de tiempo (timeLimit) debe ser de 20 o 30 segundos según la dificultad.
+- Incluye una breve explicación en cada pregunta explicando por qué la respuesta es correcta.`;
+
+      const responseSchema = {
+        type: 'object',
+        properties: {
+          title: { type: 'string', description: 'Título creativo y corto para el quiz.' },
+          description: { type: 'string', description: 'Descripción general del quiz de qué trata.' },
+          questions: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                questionText: { type: 'string', description: 'Texto de la pregunta.' },
+                questionType: {
+                  type: 'string',
+                  enum: ['multiple_choice', 'true_false', 'short_answer', 'ordering'],
+                  description: 'El tipo de pregunta.'
+                },
+                points: { type: 'integer' },
+                timeLimit: { type: 'integer' },
+                explanation: { type: 'string' },
+                options: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      content: { type: 'string', description: 'Texto de la respuesta o elemento a ordenar.' },
+                      isCorrect: { type: 'boolean', description: 'Si es correcta.' },
+                      position: { type: 'integer', description: 'Posición lógica obligatoria si es de tipo ordering, comenzando en 1.' }
+                    },
+                    required: ['content', 'isCorrect']
+                  }
+                }
+              },
+              required: ['questionText', 'questionType', 'points', 'timeLimit', 'options']
+            }
+          }
+        },
+        required: ['title', 'description', 'questions']
+      };
+
+      const response = await this.ai.models.generateContent({
+        model: 'gemini-3.5-flash',
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: responseSchema as any,
+        },
+      });
+
+      const responseText = response.text;
+      if (!responseText) {
+        throw new InternalServerErrorException('No se recibió texto de respuesta de la IA.');
+      }
+
+      const parsedQuiz = JSON.parse(responseText);
+
+      // Guardar el quiz en base de datos usando transacciones anidadas en un solo paso
+      const createdQuiz = await this.prisma.quiz.create({
+        data: {
+          title: parsedQuiz.title || dto.theme,
+          description: parsedQuiz.description || `Trivia generada por IA sobre ${dto.theme}`,
+          categoryId: dto.categoryId || null,
+          creatorId: userId,
+          questions: {
+            create: parsedQuiz.questions.map((q: any, qIdx: number) => ({
+              questionText: q.questionText,
+              questionType: q.questionType,
+              points: q.points ?? 1000,
+              timeLimit: q.timeLimit ?? 20,
+              explanation: q.explanation || null,
+              orderNumber: qIdx + 1,
+              options: {
+                create: q.options.map((o: any) => ({
+                  content: o.content,
+                  isCorrect: o.isCorrect,
+                  position: q.questionType === 'ordering' ? (o.position ?? null) : null,
+                })),
+              },
+            })),
+          },
+        },
+        include: {
+          questions: {
+            include: {
+              options: true,
+            },
+          },
+        },
+      });
+
+      return createdQuiz;
+    } catch (error) {
+      console.error('Error generating quiz with AI:', error);
+      throw new InternalServerErrorException('Error al generar el Quiz utilizando Inteligencia Artificial.');
     }
   }
 }

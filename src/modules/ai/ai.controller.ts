@@ -1,7 +1,10 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request } from '@nestjs/common';
 import { AiService } from './ai.service';
 import { ChatRequestDto } from './dto/chat-request.dto';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { GenerateQuizDto } from './dto/generate-quiz.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import type { RequestWithUser } from '../../common/interfaces/request-with-user.interface';
 
 @ApiTags('AI (IA)')
 @Controller('ai')
@@ -21,5 +24,20 @@ export class AiController {
   })
   chat(@Body() chatRequestDto: ChatRequestDto) {
     return this.aiService.getChatResponse(chatRequestDto);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Post('generate-quiz')
+  @ApiOperation({ summary: 'Generar un Quiz completo con Inteligencia Artificial' })
+  @ApiResponse({
+    status: 201,
+    description: 'Quiz generado exitosamente y guardado en base de datos.',
+  })
+  generateQuiz(
+    @Body() generateQuizDto: GenerateQuizDto,
+    @Request() req: RequestWithUser,
+  ) {
+    return this.aiService.generateQuiz(generateQuizDto, req.user.userId);
   }
 }
