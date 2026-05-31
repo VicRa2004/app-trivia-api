@@ -6,7 +6,7 @@ import {
 import { PrismaService } from '../../prisma.service';
 import { CreateQuizDto } from './dto/create-quiz.dto';
 import { UpdateQuizDto } from './dto/update-quiz.dto';
-import { PaginationDto } from '../../common/dto/pagination-query.dto';
+import { QuizPaginationDto } from './dto/quiz-pagination.dto';
 
 @Injectable()
 export class QuizzesService {
@@ -25,13 +25,26 @@ export class QuizzesService {
     });
   }
 
-  async findAll(paginationDto: PaginationDto) {
-    const { page = 1, limit = 10 } = paginationDto;
+  async findAll(paginationDto: QuizPaginationDto) {
+    const { page = 1, limit = 10, search, categoryId } = paginationDto;
     const skip = (page - 1) * limit;
+
+    const whereClause: any = { isPublic: true };
+
+    if (categoryId) {
+      whereClause.categoryId = categoryId;
+    }
+
+    if (search) {
+      whereClause.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+      ];
+    }
 
     const [data, total] = await Promise.all([
       this.prisma.quiz.findMany({
-        where: { isPublic: true },
+        where: whereClause,
         skip,
         take: limit,
         include: {
@@ -41,7 +54,7 @@ export class QuizzesService {
           category: true,
         },
       }),
-      this.prisma.quiz.count({ where: { isPublic: true } }),
+      this.prisma.quiz.count({ where: whereClause }),
     ]);
 
     return {
@@ -55,13 +68,26 @@ export class QuizzesService {
     };
   }
 
-  async findAllMyQuizzes(userId: string, paginationDto: PaginationDto) {
-    const { page = 1, limit = 10 } = paginationDto;
+  async findAllMyQuizzes(userId: string, paginationDto: QuizPaginationDto) {
+    const { page = 1, limit = 10, search, categoryId } = paginationDto;
     const skip = (page - 1) * limit;
+
+    const whereClause: any = { creatorId: userId };
+
+    if (categoryId) {
+      whereClause.categoryId = categoryId;
+    }
+
+    if (search) {
+      whereClause.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+      ];
+    }
 
     const [data, total] = await Promise.all([
       this.prisma.quiz.findMany({
-        where: { creatorId: userId },
+        where: whereClause,
         skip,
         take: limit,
         include: {
@@ -71,7 +97,7 @@ export class QuizzesService {
           category: true,
         },
       }),
-      this.prisma.quiz.count({ where: { creatorId: userId } }),
+      this.prisma.quiz.count({ where: whereClause }),
     ]);
 
     return {

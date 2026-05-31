@@ -21,6 +21,7 @@ import {
   ApiResponse,
 } from '@nestjs/swagger';
 import { PaginationDto } from '../../common/dto/pagination-query.dto';
+import { QuizPaginationDto } from './dto/quiz-pagination.dto';
 import type { RequestWithUser } from '../../common/interfaces/request-with-user.interface';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
@@ -79,7 +80,7 @@ export class QuizzesController {
       },
     },
   })
-  findAll(@Query() paginationDto: PaginationDto) {
+  findAll(@Query() paginationDto: QuizPaginationDto) {
     return this.quizzesService.findAll(paginationDto);
   }
 
@@ -91,7 +92,7 @@ export class QuizzesController {
       'Obtener lista de quizzes creados por el usuario activo (públicos y privados)',
   })
   findAllMyQuizzes(
-    @Query() paginationDto: PaginationDto,
+    @Query() paginationDto: QuizPaginationDto,
     @Request() req: RequestWithUser,
   ) {
     return this.quizzesService.findAllMyQuizzes(req.user.userId, paginationDto);

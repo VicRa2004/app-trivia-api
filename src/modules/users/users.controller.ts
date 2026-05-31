@@ -57,6 +57,12 @@ export class UsersController {
     return this.usersService.findAll(paginationDto);
   }
 
+  @Get(':id/stats')
+  @ApiOperation({ summary: 'Obtener estadísticas de juego del usuario' })
+  getPlayerStats(@Param('id') id: string) {
+    return this.usersService.getPlayerStats(id);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Obtener usuario por ID' })
   findOne(@Param('id') id: string) {

@@ -1,6 +1,6 @@
 import { PartialType } from '@nestjs/swagger';
 import { RegisterDto } from '../../auth/dto/register.dto';
-import { IsOptional, IsUUID } from 'class-validator';
+import { IsOptional, IsUUID, IsString } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateUserDto extends PartialType(RegisterDto) {
@@ -8,4 +8,9 @@ export class UpdateUserDto extends PartialType(RegisterDto) {
   @IsUUID()
   @IsOptional()
   avatarId?: string;
+
+  @ApiPropertyOptional({ description: 'Contraseña actual del usuario' })
+  @IsString()
+  @IsOptional()
+  currentPassword?: string;
 }

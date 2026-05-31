@@ -437,6 +437,17 @@ export class GameService {
           select: {
             title: true,
             thumbnailUrl: true,
+            questions: {
+              select: {
+                id: true,
+                questionText: true,
+                questionType: true,
+                orderNumber: true,
+              },
+              orderBy: {
+                orderNumber: 'asc',
+              },
+            },
           },
         },
         attempts: {
@@ -446,6 +457,15 @@ export class GameService {
             user: {
               select: {
                 username: true,
+              },
+            },
+            responses: {
+              select: {
+                id: true,
+                questionId: true,
+                givenAnswer: true,
+                isCorrect: true,
+                responseTimeMs: true,
               },
             },
           },
